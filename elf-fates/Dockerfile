@@ -101,6 +101,73 @@ RUN echo "*** Installing OpenMPI version ${OPENMPI_VERSION}" && \
 ENV PATH=/usr/local/openmpi/bin:$PATH
 ENV LD_LIBRARY_PATH=/usr/local/openmpi/lib:$LD_LIBRARY_PATH
 
+# --- Expat Setup ---
+ENV EXPAT_VERSION=2.4.4
+
+RUN echo "*** Installing Expat XML parser version ${EXPAT_VERSION}" && \
+    cd / && \
+    wget https://github.com/libexpat/libexpat/releases/download/R_2_4_4/expat-${EXPAT_VERSION}.tar.xz && \
+    tar -xvf expat-${EXPAT_VERSION}.tar.xz && \
+    cd expat-${EXPAT_VERSION} && \
+    ./configure && \
+    make -j$(nproc) && \
+    make install && \
+    cd / && rm -rf expat-${EXPAT_VERSION} expat-${EXPAT_VERSION}.tar.xz
+
+# --- HDF5 Setup ---
+ENV HDF5_VERSION=1.13.0
+
+RUN echo "*** Installing HDF5 version ${HDF5_VERSION}" && \
+    cd / && \
+    wget https://support.hdfgroup.org/ftp/HDF5/prev-releases/hdf5-1.13/hdf5-${HDF5_VERSION}/src/hdf5-${HDF5_VERSION}.tar.gz && \
+    tar -xvf hdf5-${HDF5_VERSION}.tar.gz && \
+    cd hdf5-${HDF5_VERSION} && \
+    CC=mpicc ./configure --enable-fortran --enable-parallel --prefix=/usr/local/hdf5 && \
+    make -j$(nproc) && \
+    make install && \
+    cd / && rm -rf hdf5-${HDF5_VERSION} hdf5-${HDF5_VERSION}.tar.gz
+
+# Update PATH and LD_LIBRARY_PATH for HDF5
+ENV PATH=/usr/local/hdf5/bin:$PATH
+ENV LD_LIBRARY_PATH=/usr/local/hdf5/lib:$LD_LIBRARY_PATH
+
+# --- netCDF Setup ---
+ENV NETCDF_VERSION=4.9.0
+
+RUN echo "*** Installing netCDF version ${NETCDF_VERSION}" && \
+    cd / && \
+    wget https://github.com/Unidata/netcdf-c/archive/refs/tags/v${NETCDF_VERSION}.tar.gz && \
+    tar -xvf v${NETCDF_VERSION}.tar.gz && \
+    cd netcdf-c-${NETCDF_VERSION} && \
+    export H5DIR=/usr/local/hdf5 && \
+    export NCDIR=/usr/local/netcdf && \
+    CC=mpicc CPPFLAGS=-I${H5DIR}/include LDFLAGS=-L${H5DIR}/lib ./configure --enable-parallel-tests --prefix=${NCDIR} && \
+    make -j$(nproc) && \
+    make install && \
+    cd / && rm -rf netcdf-c-${NETCDF_VERSION} v${NETCDF_VERSION}.tar.gz
+
+# Update PATH and LD_LIBRARY_PATH for netCDF
+ENV PATH=/usr/local/netcdf/bin:$PATH
+ENV LD_LIBRARY_PATH=/usr/local/netcdf/lib:$LD_LIBRARY_PATH
+
+# --- netCDF-Fortran Setup ---
+ENV NETCDF_FORTRAN_VERSION=4.5.4
+
+RUN echo "*** Installing netCDF-Fortran version ${NETCDF_FORTRAN_VERSION}" && \
+    cd / && \
+    wget https://github.com/Unidata/netcdf-fortran/archive/refs/tags/v${NETCDF_FORTRAN_VERSION}.tar.gz && \
+    tar -xvf v${NETCDF_FORTRAN_VERSION}.tar.gz && \
+    cd netcdf-fortran-${NETCDF_FORTRAN_VERSION} && \
+    export NCDIR=/usr/local/netcdf && \
+    export NFDIR=/usr/local/netcdf && \
+    CPPFLAGS=-I${NCDIR}/include LDFLAGS=-L${NCDIR}/lib ./configure --prefix=${NFDIR} --enable-parallel-tests && \
+    make -j$(nproc) && \
+    make install && \
+    cd / && rm -rf netcdf-fortran-${NETCDF_FORTRAN_VERSION} v${NETCDF_FORTRAN_VERSION}.tar.gz
+
+# --- Final Cleanup ---
+RUN rm -rf /usr/local/src/*
+
 # --- Elm Setup ---
 # Create a user to access the E3SM directory
 RUN useradd -ms /bin/bash elm-user -u 1000
