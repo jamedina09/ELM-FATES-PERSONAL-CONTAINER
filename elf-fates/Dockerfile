@@ -74,12 +74,6 @@ ENV LC_ALL=en_US.UTF-8
 ENV LANG=en_US.UTF-8
 ENV LANGUAGE=en_US.UTF-8
 
-# --- User definition ---
-# Create a user
-RUN useradd -ms /bin/bash elm-user -u 1000 && \
-    usermod -aG sudo elm-user && \
-    echo 'elm-user:fates' | chpasswd
-
 # --- GCC Setup ---
 # Make sure to check the application binary interface (ABI) compatibility with the GCC version
 # When you run this image again, probably when updating the packages or whatever, you may get some errors.
@@ -194,10 +188,39 @@ RUN echo "*** Installing netCDF-Fortran version ${NETCDF_FORTRAN_VERSION}" && \
 # Remove any extra build files
 RUN rm -rf /usr/local/src/* /tmp/*
 
+# # --- User definition ---
+# # Create a user
+# RUN groupadd -r dockerusers && \
+#     useradd -ms /bin/bash elm-user -u 1000 -g dockerusers
+#     #  && \
+#     # usermod -aG sudo elm-user && \
+#     # echo 'elm-user:fates' | chpasswd
+
+# # --- Elm Setup ---
+# # Create necessary directories
+# RUN mkdir -p /tools/cprnc /baselines /home/elm-user/.cime && \
+#     chown elm-user:dockerusers /home/elm-user && \
+#     chown elm-user /home/elm-user/.cime && \
+#     chown elm-user .cime && \
+#     chown elm-user baselines && \
+#     chown elm-user tools/cprnc && \
+#     chown elm-user tools && \
+#     chown elm-user:dockerusers /E3SM
+
+# Create a user and a group
+RUN groupadd -r dockerusers && \
+    useradd -ms /bin/bash elm-user -u 1000 -g dockerusers
+
 # --- Elm Setup ---
-# Create necessary directories
-RUN mkdir -p /tools/cprnc /baselines /home/elm-user/.cime && \
-    chown -R elm-user:elm-user /home/elm-user
+# Create necessary directories and set proper ownership
+RUN mkdir -p /tools/cprnc /baselines /.cime /home/elm-user/.cime && \
+    chown elm-user:dockerusers home/elm-user
+
+RUN chown elm-user tools && \
+    chown elm-user tools/cprnc && \
+    chown elm-user baselines && \
+    chown elm-user .cime && \
+    chown elm-user /home/elm-user/.cime
 
 # Define environment variables for repository tags and URLs
 ENV FATES_TAG=sci.1.76.4_api.35.1.0
@@ -254,14 +277,22 @@ RUN wget $HLM_REPOSITORY_URL/archive/refs/tags/$HLM_TAG.tar.gz && \
     rm $CIME_TAG.tar.gz && \
     mv cime-$CIME_TAG $CIME_LOCATION
 
+RUN chown elm-user:dockerusers /E3SM && \
+    chmod -R 777 /E3SM
+
 # Download configuration files
-RUN cd /home/elm-user/.cime && \
+RUN cd /.cime && \
+    wget $REPOSITORY_RAW_URL/config && \
+    wget $REPOSITORY_RAW_URL/config_compilers.xml && \
+    wget $REPOSITORY_RAW_URL/config_machines.xml && \
+    wget $REPOSITORY_RAW_URL/gnu_docker.cmake && \
+    cd /home/elm-user/.cime && \
     wget $REPOSITORY_RAW_URL/config && \
     wget $REPOSITORY_RAW_URL/config_compilers.xml && \
     wget $REPOSITORY_RAW_URL/config_machines.xml && \
     wget $REPOSITORY_RAW_URL/gnu_docker.cmake
 
-# # Configure bashrc for elm-user
+# Configure bashrc for elm-user
 RUN echo 'alias ls="ls --color=auto"' >> /home/elm-user/.bashrc && \
     echo 'alias grep="grep --color=auto"' >> /home/elm-user/.bashrc  && \
     echo "alias la='ls -la'" >> /home/elm-user/.bashrc && \
@@ -269,17 +300,18 @@ RUN echo 'alias ls="ls --color=auto"' >> /home/elm-user/.bashrc && \
     echo "export LS_COLORS" >> /home/elm-user/.bashrc && \
     echo "PS1='\\e[37;1m\\u@\\e[35m\\W\\e[0m\\$ '" >> /home/elm-user/.bashrc
 
-# Switch to the new user
+# Create projects_mirror directory, set ownership, and allow group write permissions
+RUN mkdir -p /projects_mirror && \
+    chown elm-user:dockerusers projects_mirror
+
 ENV USER=elm-user
 
-RUN chown elm-user:elm-user /E3SM && chmod -R 777 /E3SM  
-
 # Any additional setup commands (if necessary)
-RUN echo "Setting up the environment for user: ${USER}"
+RUN echo "Setting up the environment for user: elm-user"
 
 # Set the default command to run when the container starts
 CMD ["/bin/bash"]
 
 # Build and run commands
 # podman build -t elm-build-image .
-# podman run --name ubun_test -it elm-build-image /bin/bash
+
