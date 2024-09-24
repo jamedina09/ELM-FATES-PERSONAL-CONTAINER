@@ -188,28 +188,15 @@ RUN echo "*** Installing netCDF-Fortran version ${NETCDF_FORTRAN_VERSION}" && \
 # Remove any extra build files
 RUN rm -rf /usr/local/src/* /tmp/*
 
-# # --- User definition ---
-# # Create a user
-# RUN groupadd -r dockerusers && \
-#     useradd -ms /bin/bash elm-user -u 1000 -g dockerusers
-#     #  && \
-#     # usermod -aG sudo elm-user && \
-#     # echo 'elm-user:fates' | chpasswd
-
-# # --- Elm Setup ---
-# # Create necessary directories
-# RUN mkdir -p /tools/cprnc /baselines /home/elm-user/.cime && \
-#     chown elm-user:dockerusers /home/elm-user && \
-#     chown elm-user /home/elm-user/.cime && \
-#     chown elm-user .cime && \
-#     chown elm-user baselines && \
-#     chown elm-user tools/cprnc && \
-#     chown elm-user tools && \
-#     chown elm-user:dockerusers /E3SM
+# --- User definition ---
 
 # Create a user and a group
 RUN groupadd -r dockerusers && \
     useradd -ms /bin/bash elm-user -u 1000 -g dockerusers
+#  && \
+# usermod -aG sudo elm-user && \
+# echo 'elm-user:fates' | chpasswd
+# commebted lines above add sudo password to elm-user
 
 # --- Elm Setup ---
 # Create necessary directories and set proper ownership
@@ -302,7 +289,7 @@ RUN echo 'alias ls="ls --color=auto"' >> /home/elm-user/.bashrc && \
 
 # Create projects_mirror directory, set ownership, and allow group write permissions
 RUN mkdir -p /projects_mirror && \
-    chown elm-user:dockerusers projects_mirror
+    chown -R elm-user:dockerusers projects_mirror
 
 ENV USER=elm-user
 
