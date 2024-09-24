@@ -249,5 +249,5 @@ USER elm-user
 CMD ["/bin/bash"]
 
 # Build and run commands
-# podman build -t tst_downloads .
-# podman run --name ubun_test -it tst_downloads /bin/bash
+# podman build -t elm-fates-ubuntu-image .
+# podman run --name elm-fates-ubuntu-image -it elm-fates-ubuntu-image /bin/bash
