@@ -1,3 +1,6 @@
+## This Dockerfile is heavily based on the work of Shawn P. Serbin:
+## https://github.com/serbinsh/elm_containers
+
 # Use an updated LTS Ubuntu base image
 FROM ubuntu:22.04
 
