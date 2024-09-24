@@ -81,7 +81,13 @@ RUN useradd -ms /bin/bash elm-user -u 1000 && \
     echo 'elm-user:fates' | chpasswd
 
 # --- GCC Setup ---
-# Check for compatibility:
+# Make sure to check the application binary interface (ABI) compatibility with the GCC version
+# When you run this image again, probably when updating the packages or whatever, you may get some errors.
+# One of the errors is related to cmake not being able to find a particular library.
+# Youll get a path, when you check that path youll see the library there.
+# The problem is generally because the library was compiled with a different version of GCC.
+# The solution is to recompile the library with the same version of GCC that you are using.
+# This is because the ABI is not compatible between different versions of GCC.
 # https://gcc.gnu.org/onlinedocs/libstdc++/manual/abi.html
 
 ENV GCC_VERSION=12.1.0
