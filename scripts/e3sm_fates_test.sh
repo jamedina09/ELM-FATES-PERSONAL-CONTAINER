@@ -26,7 +26,7 @@ CIME_DIR="/E3SM/cime/scripts"
 SCRATCH_DIR="$PROJECTS_DIR/scratch"
 
 # Case-specific directories
-CASE_NAME="E3SM_FATES_TEST"
+CASE="E3SM_FATES_TEST"
 CASE_DIR="$SCRATCH_DIR/$CASE"
 
 # Archive directory for storing model output
@@ -64,8 +64,7 @@ COMPILER="gnu"
 # ------------------------------------------------------------------
 # Create a new case with the specified parameters
 # ------------------------------------------------------------------
-./create_newcase --case "$CASE_DIR" --res "$RES" --compset "$COMP" --mach "$MACH" --compiler "${COMPILER}"
-#  --project "${PROJECT}"
+./create_newcase --case "$CASE_DIR" --res "$RES" --compset "$COMP" --mach "$MACH" --compiler "${COMPILER}" --project "${PROJECT}"
 
 # ------------------------------------------------------------------
 # Navigate to the newly created case directory
@@ -93,6 +92,7 @@ xmlchanges=(
     "CIME_OUTPUT_ROOT=$CASE_DIR"
     "RUNDIR=${CASE_DIR}/run"
     "EXEROOT=${CASE_DIR}/bld"
+    "DOUT_S"=TRUE
 )
 
 # Loop through and apply each XML change
@@ -127,30 +127,30 @@ done
 # ------------------------------------------------------------------
 ./case.submit
 
-# # ------------------------------------------------------------------
-# # Post-processing: Move to the archive history directory for output processing
-# # ------------------------------------------------------------------
+# ------------------------------------------------------------------
+# Post-processing: Move to the archive history directory for output processing
+# ------------------------------------------------------------------
 
-# # Define the archive directory for model output history files
-# ARCHIVE_HIST_DIR="$ARCHIVE_DIR/lnd/hist"
+# Define the archive directory for model output history files
+ARCHIVE_HIST_DIR="$ARCHIVE_DIR/lnd/hist"
 
-# # Check if the history directory exists
-# if [[ ! -d "$ARCHIVE_HIST_DIR" ]]; then
-#     echo "Error: Archive history directory not found at $ARCHIVE_HIST_DIR"
-#     exit 1
-# fi
+# Check if the history directory exists
+if [[ ! -d "$ARCHIVE_HIST_DIR" ]]; then
+    echo "Error: Archive history directory not found at $ARCHIVE_HIST_DIR"
+    exit 1
+fi
 
-# # Change to the archive history directory
-# cd "$ARCHIVE_HIST_DIR" || {
-#     echo "Error: Could not change to archive history directory. Exiting."
-#     exit 1
-# }
+# Change to the archive history directory
+cd "$ARCHIVE_HIST_DIR" || {
+    echo "Error: Could not change to archive history directory. Exiting."
+    exit 1
+}
 
-# # ------------------------------------------------------------------
-# # Concatenate NetCDF history output files into a single file
-# # ------------------------------------------------------------------
-# ncrcat *.h0.*.nc "Aggregated_${CASE_NAME}_Output.nc"
+# ------------------------------------------------------------------
+# Concatenate NetCDF history output files into a single file
+# ------------------------------------------------------------------
+ncrcat *.h0.*.nc "Aggregated_${CASE_NAME}_Output.nc"
 
-# # ------------------------------------------------------------------
-# # End of script
-# # ------------------------------------------------------------------
+# ------------------------------------------------------------------
+# End of script
+# ------------------------------------------------------------------
