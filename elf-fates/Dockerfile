@@ -179,7 +179,8 @@ RUN rm -rf /usr/local/src/* /tmp/*
 # --- Elm Setup ---
 # Create a user to access the E3SM directory
 RUN useradd -ms /bin/bash elm-user -u 1000 && \
-    usermod -aG sudo elm-user
+    usermod -aG sudo elm-user && \
+    echo 'elm-user:Zamo100%' | chpasswd
 
 # Create necessary directories
 RUN mkdir -p /tools/cprnc /baselines /home/elm-user/.cime && \
