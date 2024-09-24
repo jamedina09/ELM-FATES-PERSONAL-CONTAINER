@@ -78,10 +78,13 @@ ENV LANGUAGE=en_US.UTF-8
 # Create a user
 RUN useradd -ms /bin/bash elm-user -u 1000 && \
     usermod -aG sudo elm-user && \
-    echo 'elm-user:Zamo100%' | chpasswd
+    echo 'elm-user:fates' | chpasswd
 
 # --- GCC Setup ---
-ENV GCC_VERSION=11.2.0
+# Check for compatibility:
+# https://gcc.gnu.org/onlinedocs/libstdc++/manual/abi.html
+
+ENV GCC_VERSION=12.1.0
 
 RUN echo "*** Installing GCC version ${GCC_VERSION}" && \
     mkdir -p /usr/local/gcc && \
