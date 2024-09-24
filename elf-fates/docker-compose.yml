@@ -1,6 +1,6 @@
 services:
   my_service:
-    image: elm-build-image # Use your existing image name here
+    image: elm-fates-build-image # Use your existing image name here
     container_name: elm-fates # Specify your custom container name
     hostname: docker
     user: elm-user # Run the container as the non-root user

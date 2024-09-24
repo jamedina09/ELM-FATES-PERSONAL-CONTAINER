@@ -300,5 +300,5 @@ RUN echo "Setting up the environment for user: elm-user"
 CMD ["/bin/bash"]
 
 # Build and run commands
-# podman build -t elm-build-image .
+# podman build -t elm-fates-build-image .
 
