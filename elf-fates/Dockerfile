@@ -1,6 +1,7 @@
 ## This Dockerfile is heavily based on the work of Shawn P. Serbin:
 ## https://github.com/serbinsh/elm_containers
-
+## ...and also on the work of NGEETROPICS - Gregory Lemieux - Jessy Needham.
+## https://github.com/NGEET/fates-tutorial
 # Use an updated LTS Ubuntu base image
 FROM ubuntu:22.04
 
