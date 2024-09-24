@@ -13,7 +13,7 @@
       <CIME_OUTPUT_ROOT>projects_mirror/scratch</CIME_OUTPUT_ROOT>
       <DIN_LOC_ROOT>projects_mirror/inputdata/</DIN_LOC_ROOT>
       <DIN_LOC_ROOT_CLMFORC>projects_mirror/inputdata/atm/datm7</DIN_LOC_ROOT_CLMFORC>
-      <DOUT_S_ROOT>projects_mirror/scratch/archive/$CASE</DOUT_S_ROOT>
+      <DOUT_S_ROOT>projects_mirror/archive/$CASE</DOUT_S_ROOT>
       <BASELINE_ROOT>baselines</BASELINE_ROOT>
       <CCSM_CPRNC>tools/cprnc/cprnc</CCSM_CPRNC>
       <GMAKE>make</GMAKE>
