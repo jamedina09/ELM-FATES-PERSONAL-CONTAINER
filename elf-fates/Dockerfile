@@ -71,6 +71,12 @@ ENV LC_ALL=en_US.UTF-8
 ENV LANG=en_US.UTF-8
 ENV LANGUAGE=en_US.UTF-8
 
+# --- User definition ---
+# Create a user
+RUN useradd -ms /bin/bash elm-user -u 1000 && \
+    usermod -aG sudo elm-user && \
+    echo 'elm-user:Zamo100%' | chpasswd
+
 # --- GCC Setup ---
 ENV GCC_VERSION=11.2.0
 
@@ -177,11 +183,6 @@ RUN echo "*** Installing netCDF-Fortran version ${NETCDF_FORTRAN_VERSION}" && \
 RUN rm -rf /usr/local/src/* /tmp/*
 
 # --- Elm Setup ---
-# Create a user to access the E3SM directory
-RUN useradd -ms /bin/bash elm-user -u 1000 && \
-    usermod -aG sudo elm-user && \
-    echo 'elm-user:Zamo100%' | chpasswd
-
 # Create necessary directories
 RUN mkdir -p /tools/cprnc /baselines /home/elm-user/.cime && \
     chown -R elm-user:elm-user /home/elm-user
