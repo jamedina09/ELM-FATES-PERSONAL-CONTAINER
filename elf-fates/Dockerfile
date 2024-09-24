@@ -254,9 +254,12 @@ RUN echo 'alias ls="ls --color=auto"' >> /home/elm-user/.bashrc && \
     echo "PS1='\\e[37;1m\\u@\\e[35m\\W\\e[0m\\$ '" >> /home/elm-user/.bashrc
 
 # Switch to the new user
-USER elm-user
+ENV USER=elm-user
 
-# Set the default command
+# Any additional setup commands (if necessary)
+RUN echo "Setting up the environment for user: ${USER}"
+
+# Set the default command to run when the container starts
 CMD ["/bin/bash"]
 
 # Build and run commands
