@@ -1,5 +1,5 @@
 # Use an updated LTS Ubuntu base image
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
 # Set the environment variable to avoid interactive prompts during installation
 ENV DEBIAN_FRONTEND=noninteractive
@@ -18,6 +18,7 @@ RUN apt-get update -y && \
     emacs \
     ftp \
     git \
+    gpg \
     htop \
     libblas-dev \
     libcurl4-openssl-dev \
@@ -56,7 +57,8 @@ RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1 && \
 
 # Set up environment variables for paths and libraries
 ENV PATH=/usr/local/bin:$PATH
-ENV LD_LIBRARY_PATH=/usr/local/lib:/usr/local/lib64:$LD_LIBRARY_PATH
+ENV LD_LIBRARY_PATH=/usr/local/lib:/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH
+# /usr/lib/x86_64-linux-gnu is /usr/lib64. This changed when Ubuntu 12.04 came out.
 
 # Set the default locale
 # Set the locale to en_US.UTF-8
@@ -255,6 +257,8 @@ RUN echo 'alias ls="ls --color=auto"' >> /home/elm-user/.bashrc && \
 
 # Switch to the new user
 ENV USER=elm-user
+
+RUN chown elm-user:elm-user /E3SM && chmod -R 777 /E3SM  
 
 # Any additional setup commands (if necessary)
 RUN echo "Setting up the environment for user: ${USER}"
