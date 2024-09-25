@@ -290,7 +290,8 @@ RUN echo 'alias ls="ls --color=auto"' >> /home/elm-user/.bashrc && \
 
 # Create projects_mirror directory, set ownership, and allow group write permissions
 RUN mkdir -p /projects_mirror && \
-    chown -R elm-user:dockerusers projects_mirror
+    chown elm-user:dockerusers /projects_mirror && \
+    chmod -R 777 /projects_mirror
 
 ENV USER=elm-user
 
@@ -299,6 +300,8 @@ RUN echo "Setting up the environment for user: elm-user"
 
 # Set the default command to run when the container starts
 CMD ["/bin/bash"]
+
+# Check https://www.pluralsight.com/blog/it-ops/linux-file-permissions for examples on how to give permissions
 
 # Build and run commands
 # podman build -t elm-fates-build-image .
