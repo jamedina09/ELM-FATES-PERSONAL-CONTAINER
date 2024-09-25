@@ -8,6 +8,51 @@ FROM ubuntu:22.04
 # Set the environment variable to avoid interactive prompts during installation
 ENV DEBIAN_FRONTEND=noninteractive
 
+# Categories and Explanation for packages in the apt-get install list:
+# - Basic Package Management and Utilities:
+#     apt-transport-https: Required for accessing repositories over HTTPS. Keep if you're using secure package sources.
+#     apt-utils: Provides utilities for package management. Safe to remove unless you need advanced package management.
+#     ca-certificates: Essential for verifying SSL certificates for HTTPS connections (e.g., downloading files from secure sources). Usually necessary.
+#     curl / wget: Used to download files from the web. Keep if your Dockerfile relies on downloading resources during the build.
+# - Development Tools:
+#     build-essential: A meta-package that installs GCC, make, and other compilation tools. Keep if your build requires compiling software.
+#     cmake: Used for building software that relies on CMake build scripts. Keep if you're compiling software that requires CMake.
+#     libblas-dev, liblapack-dev: Linear algebra libraries. Keep if you are doing scientific or mathematical computation.
+#     libcurl4-openssl-dev: Development files for libcurl (used in many HTTP clients). Keep if your application links to libcurl.
+#     libffi-dev, libffi7: Foreign Function Interface libraries, required for interfacing with C in Python or other languages. Keep if you're using FFI.
+#     libgmp3-dev: Used for arbitrary precision arithmetic in some scientific libraries. Remove if not needed.
+#     libncurses5-dev: Development files for terminal user interfaces. Only keep if you're building software that relies on ncurses.
+#     libxml2, libxml2-dev, libxml-libxml-perl, libxml2-utils: Libraries for XML processing. Keep if your application processes XML data.
+# - Shells, Text Editors, and Monitoring Tools:
+#     csh: The C shell. Only needed if your scripts or tools use csh. Can likely be removed unless explicitly required.
+#     emacs: A text editor. Remove unless you need it for editing or debugging within the container.
+#     htop: An interactive system monitor. Remove if you don't need to monitor the container’s resource usage interactively.
+#     m4: A macro processing language. Keep if needed for build scripts.
+# - File Compression and Transfer:
+#     bzip2, tar, xz-utils: Utilities for file compression and decompression. Usually needed.
+#     ftp, openssh-client: For file transfer and SSH. Remove if you're not transferring files via FTP/SSH within the container.
+# - Version Control:
+#     git: Keep if you're cloning repositories or managing version control.
+#     subversion: Keep if you're using SVN repositories. Otherwise, remove.
+# - Python and Related Development Tools:
+#     python3, python3-dev, python3-pip, python3-venv: Necessary for Python development. Keep if your application is Python-based or uses Python tools.
+# - Other Libraries and Tools:
+#     libudunits2-0, libudunits2-dev, udunits-bin: Libraries for unit conversion. Keep if used in scientific computation.
+#     libxml2 and libxml2-utils: XML processing libraries. Keep if your project handles XML files.
+#     zlib1g-dev: Compression library development files. Keep if your application or dependencies need compression functionality.
+# - Optional or Likely Removable:
+#     sudo: Commented out in your Dockerfile. Typically unnecessary in a container unless you need privilege escalation during runtime.
+#     locales: Useful if you're dealing with localization. Remove if you don’t need language support.
+#     nco: A tool for working with netCDF files. Keep only if you're dealing with climate/atmospheric data or other netCDF data.
+# - What to Keep:
+#     Critical utilities for package management, SSL verification, and downloading files: (apt-transport-https, ca-certificates, curl, wget).
+#     Development tools if compiling software in the container: (build-essential, cmake, python3-dev, etc.).
+#     Version control: (git, possibly subversion).
+#     Python: (python3, python3-pip, python3-venv) if your application uses Python.
+# - What to Remove (if not needed):
+#     Editors, monitors, FTP clients, and shells: (emacs, htop, ftp, csh).
+#     Libraries for specific functionality: (libgmp3-dev, libudunits2, libncurses5-dev, etc.), unless required by your application.
+
 # Update the system and install dependencies (organized alphabetically)
 RUN apt-get update -y && \
     apt-get install -y \
@@ -46,7 +91,7 @@ RUN apt-get update -y && \
     python3-pip \
     python3-venv \
     subversion \
-    sudo \
+    # sudo \
     tar \
     udunits-bin \
     wget \
@@ -185,30 +230,11 @@ RUN echo "*** Installing netCDF-Fortran version ${NETCDF_FORTRAN_VERSION}" && \
     make install && \
     cd / && rm -rf netcdf-fortran-${NETCDF_FORTRAN_VERSION} v${NETCDF_FORTRAN_VERSION}.tar.gz
 
-# --- Final Cleanup ---
-# Remove any extra build files
-RUN rm -rf /usr/local/src/* /tmp/*
-
-# --- User definition ---
-
-# Create a user and a group
-RUN groupadd -r dockerusers && \
-    useradd -ms /bin/bash elm-user -u 1000 -g dockerusers
-#  && \
-# usermod -aG sudo elm-user && \
-# echo 'elm-user:fates' | chpasswd
-# commebted lines above add sudo password to elm-user
-
 # --- Elm Setup ---
 # Create necessary directories and set proper ownership
-RUN mkdir -p /tools/cprnc /baselines /.cime /home/elm-user/.cime && \
-    chown elm-user:dockerusers home/elm-user
-
-RUN chown elm-user tools && \
-    chown elm-user tools/cprnc && \
-    chown elm-user baselines && \
-    chown elm-user .cime && \
-    chown elm-user /home/elm-user/.cime
+RUN mkdir -p /tools/cprnc /baselines /.cime /home/elm-user/.cime
+#  && \
+#     chown elm-user:dockerusers home/elm-user
 
 # Define environment variables for repository tags and URLs
 ENV FATES_TAG=sci.1.76.4_api.35.1.0
@@ -265,43 +291,99 @@ RUN wget $HLM_REPOSITORY_URL/archive/refs/tags/$HLM_TAG.tar.gz && \
     rm $CIME_TAG.tar.gz && \
     mv cime-$CIME_TAG $CIME_LOCATION
 
-RUN chown elm-user:dockerusers /E3SM && \
-    chmod -R 777 /E3SM
+# --- User and Group Definition ---
+# Create a user and a group for the container
+RUN groupadd -r dockerusers && \
+    useradd -ms /bin/bash -u 1000 -g dockerusers elm-user
 
-# Download configuration files
-RUN cd /.cime && \
-    wget $REPOSITORY_RAW_URL/config && \
-    wget $REPOSITORY_RAW_URL/config_compilers.xml && \
-    wget $REPOSITORY_RAW_URL/config_machines.xml && \
-    wget $REPOSITORY_RAW_URL/gnu_docker.cmake && \
-    cd /home/elm-user/.cime && \
-    wget $REPOSITORY_RAW_URL/config && \
-    wget $REPOSITORY_RAW_URL/config_compilers.xml && \
-    wget $REPOSITORY_RAW_URL/config_machines.xml && \
-    wget $REPOSITORY_RAW_URL/gnu_docker.cmake
+# # --- User definition ---
 
-# Configure bashrc for elm-user
-RUN echo 'alias ls="ls --color=auto"' >> /home/elm-user/.bashrc && \
-    echo 'alias grep="grep --color=auto"' >> /home/elm-user/.bashrc  && \
-    echo "alias la='ls -la'" >> /home/elm-user/.bashrc && \
-    echo " LS_COLORS='rs=0:di=1;35:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arj=01;31:*.taz=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.zip=01;31:*.z=01;31:*.Z=01;31:*.dz=01;31:*.gz=01;31:*.lz=01;31:*.xz=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.jpg=01;35:*.jpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.axv=01;35:*.anx=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.axa=00;36:*.oga=00;36:*.spx=00;36:*.xspf=00;36:'"  >> /home/elm-user/.bashrc && \
-    echo "export LS_COLORS" >> /home/elm-user/.bashrc && \
-    echo "PS1='\\e[37;1m\\u@\\e[35m\\W\\e[0m\\$ '" >> /home/elm-user/.bashrc
+# # Create a user and a group
+# RUN groupadd -r dockerusers && \
+#     useradd -ms /bin/bash elm-user -u 1000 -g dockerusers
+# groupadd flags: https://manpages.ubuntu.com/manpages/xenial/en/man8/groupadd.8.html#:~:text=DESCRIPTION,the%20system%20files%20as%20needed.
+# useradd flags: https://manpages.ubuntu.com/manpages/xenial/en/man8/useradd.8.html
 
-# Create projects_mirror directory, set ownership, and allow group write permissions
-RUN mkdir -p /projects_mirror && \
-    chown elm-user:dockerusers /projects_mirror && \
+# To add sudo password to the user:
+# usermod -aG sudo elm-user && \
+# echo 'elm-user:fates' | chpasswd
+
+ENV GROUP=dockerusers
+ENV USER=elm-user
+
+# --- Directory Setup ---
+# Create necessary directories and set permissions
+RUN mkdir -p /tools/cprnc /baselines /.cime /home/${USER}/.cime /projects_mirror && \
+    chown -R ${USER}:${GROUP} /tools /baselines /.cime /home/${USER} /projects_mirror && \
     chmod -R 777 /projects_mirror
 
-ENV USER=elm-user
+# --- Download Configuration Files ---
+# Download necessary configuration files for the environment
+RUN wget -P /.cime ${REPOSITORY_RAW_URL}/config ${REPOSITORY_RAW_URL}/config_compilers.xml \
+    ${REPOSITORY_RAW_URL}/config_machines.xml ${REPOSITORY_RAW_URL}/gnu_docker.cmake && \
+    wget -P /home/${USER}/.cime ${REPOSITORY_RAW_URL}/config ${REPOSITORY_RAW_URL}/config_compilers.xml \
+    ${REPOSITORY_RAW_URL}/config_machines.xml ${REPOSITORY_RAW_URL}/gnu_docker.cmake
+
+# # Download configuration files
+# RUN cd /.cime && \
+#     wget $REPOSITORY_RAW_URL/config && \
+#     wget $REPOSITORY_RAW_URL/config_compilers.xml && \
+#     wget $REPOSITORY_RAW_URL/config_machines.xml && \
+#     wget $REPOSITORY_RAW_URL/gnu_docker.cmake && \
+#     cd /home/elm-user/.cime && \
+#     wget $REPOSITORY_RAW_URL/config && \
+#     wget $REPOSITORY_RAW_URL/config_compilers.xml && \
+#     wget $REPOSITORY_RAW_URL/config_machines.xml && \
+#     wget $REPOSITORY_RAW_URL/gnu_docker.cmake
+
+# RUN chown ${USER}:${GROUP} home/${USER} && \
+#     chown ${USER} tools && \
+#     chown ${USER} tools/cprnc && \
+#     chown ${USER} baselines && \
+#     chown ${USER} .cime && \
+#     chown ${USER} /home/${USER}/.cime && \
+#     chown ${USER}:${GROUP} /E3SM && \
+#     chmod -R 777 /E3SM
+# # chown flags: https://manpages.ubuntu.com/manpages/xenial/man1/chown.1.html
+# # chmod flags: https://help.ubuntu.com/community/FilePermissions
+
+# --- Set Ownership for Additional Directories ---
+# Set ownership for E3SM directory and permissions
+RUN chown -R ${USER}:${GROUP} /E3SM && \
+    chmod -R 777 /E3SM
+
+# --- Cleanup ---
+# Remove any extra build files
+RUN rm -rf /usr/local/src/* /tmp/*
+
+# --- Configure Bashrc for User ---
+# Configure .bashrc for elm-user with simple aliases and prompt color
+RUN echo 'alias ls="ls --color=auto"' >> /home/${USER}/.bashrc && \
+    echo 'alias grep="grep --color=auto"' >> /home/${USER}/.bashrc && \
+    echo "alias la='ls -la'" >> /home/${USER}/.bashrc && \
+    echo 'PS1="\[\e[32m\]\u@\[\e[34m\]\W\[\e[0m\]\$ "' >> /home/${USER}/.bashrc
+
+# # --- Configure bashrc for elm-user ---
+# RUN echo 'alias ls="ls --color=auto"' >> /home/elm-user/.bashrc && \
+#     echo 'alias grep="grep --color=auto"' >> /home/elm-user/.bashrc  && \
+#     echo "alias la='ls -la'" >> /home/elm-user/.bashrc && \
+#     echo " LS_COLORS='rs=0:di=1;35:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arj=01;31:*.taz=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.zip=01;31:*.z=01;31:*.Z=01;31:*.dz=01;31:*.gz=01;31:*.lz=01;31:*.xz=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.jpg=01;35:*.jpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.axv=01;35:*.anx=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.axa=00;36:*.oga=00;36:*.spx=00;36:*.xspf=00;36:'"  >> /home/elm-user/.bashrc && \
+#     echo "export LS_COLORS" >> /home/elm-user/.bashrc && \
+#     echo "PS1='\\e[37;1m\\u@\\e[35m\\W\\e[0m\\$ '" >> /home/elm-user/.bashrc
+
+# # Create projects_mirror directory, set ownership, and allow group write permissions
+# RUN mkdir -p /projects_mirror && \
+#     chown ${USER}:${GROUP} /projects_mirror && \
+#     chmod -R 777 /projects_mirror
+
+# --- Switch to the new user ---
+USER ${USER}
 
 # Any additional setup commands (if necessary)
 RUN echo "Setting up the environment for user: elm-user"
 
 # Set the default command to run when the container starts
 CMD ["/bin/bash"]
-
-# Check https://www.pluralsight.com/blog/it-ops/linux-file-permissions for examples on how to give permissions
 
 # Build and run commands
 # podman build -t elm-fates-build-image .
