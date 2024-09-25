@@ -1,8 +1,0 @@
-services:
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    volumes:
-      - ./output:/app/output  # Mount host directory for output
-    command: /bin/sh -c "mv hello.txt output/ && tail -f /dev/null"
