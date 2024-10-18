@@ -1,29 +1,26 @@
-## Build an Ubuntu Image
+## Build an Ubuntu Image that runs FATES-ELM
 
 Change to the directory where the Dockerfile is located:
 
 ```bash
-cd /Users/MedinaJA/ELM-FATES-PERSONAL-CONTAINER/elm-fates-personal-build
+cd /Users/XXXX/ELM-FATES-PERSONAL-CONTAINER/elm-fates-personal-build
 ````
 
-2. We are creating an image to get elm-fates.
+Important information regarding the versions of the packages that need to be installed; check the appropriate versions:
 
-I’m updating what Serbin did. I am using Ubuntu 20.04 (this can be changed later).
+- For example, GNU releases: [GCC Releases](https://gcc.gnu.org/releases.html)
+- Version 11.2 was released on July 28, 2021.
 
+- For OpenMPI version history: [OpenMPI Versions](https://www.open-mpi.org/software/ompi/versions/timeline.php)
+- OpenMPI v4.0.7 was released in November/December 2021.
 
-4. Regarding the versions, check the appropriate versions:
+You may install that version and continue in this way for the rest of the packages.
 
-   - For example, GNU releases: [GCC Releases](https://gcc.gnu.org/releases.html)
-     - Version 11.2 was released on July 28, 2021.
+## To create and share the container image as a package
 
-   - For OpenMPI version history: [OpenMPI Versions](https://www.open-mpi.org/software/ompi/versions/timeline.php)
-     - OpenMPI v4.0.7 was released in November/December 2021.
+I want to use github container registry. So, to store packages, I need to create a token with write and read packages permissions. 
 
-   You may install that version and continue in this manner for the rest of the packages.
-
-# Create and share the container image as a package
-
-I want to use github container registry. So, to store packages, I need to create a token with write and read packages permissions. More info here:
+More info here:
 
 <https://medium.com/@deepak1812002/get-started-with-github-ghcr-an-alternative-of-dockerhub-f7d5b2198b9a>
 
@@ -37,7 +34,7 @@ It will ask for username and password. The password is the token. So, its better
 
 - Push the image to the registry
 
-Go to the directory wehre the containe pdm-golang is located and push it to the registry:
+Go to the directory where the Dockerfile is located, build it, and push it to the registry:
 
 ```bash
 podman build -t jamedina09/personal-elm-fates-image .
@@ -45,7 +42,9 @@ podman push localhost/jamedina09/personal-elm-fates-image:latest ghcr.io/jamedin
 
 ```
 
-# Create the Image in the local host
+## To create the image in the local host (your computer)
+
+This step is for development. To run the container in other computers follow description above.
 
 ```bash
 podman build -t personal-elm-fates-image .
@@ -57,11 +56,17 @@ podman build -t personal-elm-fates-image .
 cat /etc/os-release
 ````
 
-## To Open the Container
-Remember that is bad practice to attribute a name, you can let podman make a random name so you dont run into conflicts later
+## Download the container
 
 ```bash
-podman run --name ubun_test -it personal-elm-fates-image /bin/bash
+podman pull ghcr.io/jamedina09/personal-elm-fates-image:latest
+````
+
+## To open and run the Container
+Remember that is bad practice to attribute a name, you can let podman create a random name so you don't run into conflicts later on.
+
+```bash
+podman run --name personal-elm-fates -it personal-elm-fates-image /bin/bash
 ````
 
 ## To Load a Working Directory as a Volume

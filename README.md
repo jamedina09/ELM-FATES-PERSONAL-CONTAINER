@@ -1,6 +1,6 @@
 # Personal Elm-Fates Container
 
-This repository contains the information that I used to create my personal Elm-Fates container.
+This repository contains the Dockerfile and other information that I used to create my personal Elm-Fates container.
 
 ## Overview
 
