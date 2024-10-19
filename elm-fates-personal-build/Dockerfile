@@ -104,6 +104,9 @@ RUN apt-get update -y && \
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1 && \
     update-alternatives --install /usr/bin/pip pip /usr/bin/pip3 1
 
+# Install specific pip packages
+RUN pip install numpy==1.26.4 scipy==1.11
+
 # Set up environment variables for paths and libraries
 ENV PATH=/usr/local/bin:$PATH
 ENV LD_LIBRARY_PATH=/usr/local/lib:/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH
