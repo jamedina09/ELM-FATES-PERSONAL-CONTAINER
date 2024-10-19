@@ -30,7 +30,7 @@
          <executable></executable>
       </mpirun>
       <mpirun mpilib="default">
-         <executable>mpirun</executable>
+         <executable>mpiexec</executable>
          <arguments>
             <arg name="num_tasks"> -np $TOTALPES</arg>
             <arg name="tasks_per_node"> -npernode $MAX_TASKS_PER_NODE</arg>
